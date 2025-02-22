@@ -23,8 +23,8 @@
   async function fetchRSS(url, containerId, keywords) {
     const container = document.getElementById(containerId);
     try {
-      // 使用代理避免CORS問題（免費代理服務）
-      const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+      // 使用新的CORS代理服務
+      const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
       const response = await fetch(proxyUrl);
       if (!response.ok) {
         throw new Error(`無法載入RSS: ${response.status}`);
@@ -64,9 +64,9 @@
     }
   }
 
-  // RSS來源與關鍵詞
+  // 更新後的RSS來源
   fetchRSS("https://www.nhk.or.jp/rss/news/science.xml", "japan-ai", ["AI", "人工知能"]);
-  fetchRSS("https://www.animenewsnetwork.com/newsrss.xml", "anime", ["Anime", "アニメ"]);
+  fetchRSS("https://www.animenewsnetwork.com/news/feed", "anime", ["Anime", "アニメ"]);
   fetchRSS("https://rss.itmedia.co.jp/rss/2.0/itmedia_all.xml", "new-tech", ["Tech", "新技術"]);
   </script>
 </body>
