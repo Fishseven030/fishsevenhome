@@ -2,44 +2,70 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <title>我的資訊中心</title>
+  <title>魚七資訊中心</title>
   <style>
     body { font-family: Arial, sans-serif; margin: 20px; }
     .section { margin-bottom: 20px; }
     .item { border: 1px solid #ccc; padding: 10px; margin: 5px; }
+    .error { color: red; }
   </style>
 </head>
 <body>
-  <h1>魚七資訊中心</h1>
+  <h1>我的資訊中心</h1>
   <div class="section" id="japan-ai"><h2>日本AI產業</h2></div>
   <div class="section" id="anime"><h2>動漫</h2></div>
   <div class="section" id="new-tech"><h2>新科技</h2></div>
-  <div class="section" id="personal-data"><h2>魚七資料（Google Drive）</h2>
+  <div class="section" id="personal-data"><h2>個人資料（Google Drive）</h2>
     <a href="https://drive.google.com/drive/u/0/home" target="_blank">魚七Google Drive</a>
   </div>
 
   <script>
   async function fetchRSS(url, containerId, keywords) {
-    const response = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}`);
-    const data = await response.json();
     const container = document.getElementById(containerId);
-    data.items.forEach(item => {
-      if (keywords.some(kw => item.title.includes(kw) || item.description.includes(kw))) {
-        const div = document.createElement("div");
-        div.className = "item";
-        div.innerHTML = `
-          <h3>${item.title}</h3>
-          <p>${item.description}</p>
-          <a href="${item.link}" target="_blank">閱讀全文</a>
-        `;
-        container.appendChild(div);
+    try {
+      // 使用rss2json API抓取資料
+      const response = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}`);
+      if (!response.ok) {
+        throw new Error(`API回應錯誤: ${response.status}`);
       }
-    });
+      const data = await response.json();
+
+      // 檢查資料是否有效
+      if (!data.items || !Array.isArray(data.items)) {
+        container.innerHTML += '<p class="error">無可用資料，來源可能不支援</p>';
+        return;
+      }
+
+      // 顯示符合關鍵詞的項目
+      data.items.forEach(item => {
+        const title = item.title || "無標題";
+        const description = item.description || "無描述";
+        const link = item.link || "#";
+        if (keywords.some(kw => title.includes(kw) || description.includes(kw))) {
+          const div = document.createElement("div");
+          div.className = "item";
+          div.innerHTML = `
+            <h3>${title}</h3>
+            <p>${description}</p>
+            <a href="${link}" target="_blank">閱讀全文</a>
+          `;
+          container.appendChild(div);
+        }
+      });
+
+      // 如果沒找到匹配項目
+      if (container.children.length === 1) { // 只有h2標題
+        container.innerHTML += '<p>暫無符合條件的資料</p>';
+      }
+    } catch (error) {
+      console.error(`RSS抓取失敗 (${containerId}):`, error);
+      container.innerHTML += `<p class="error">無法載入資料: ${error.message}</p>`;
+    }
   }
 
-  // 抓取並顯示資訊
+  // RSS來源與關鍵詞
   fetchRSS("https://www.nhk.or.jp/rss/news/science.xml", "japan-ai", ["AI", "人工知能"]);
-  fetchRSS("https://japanese.engadget.com/rss.xml", "anime", ["Anime", "アニメ"]);
+  fetchRSS("https://www.animenewsnetwork.com/newsrss.xml", "anime", ["Anime", "アニメ"]); // 替換Engadget Japan
   fetchRSS("https://rss.itmedia.co.jp/rss/2.0/itmedia_all.xml", "new-tech", ["Tech", "新技術"]);
   </script>
 </body>
